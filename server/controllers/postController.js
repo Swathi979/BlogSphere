@@ -7,10 +7,24 @@ exports.getAllPosts = async (req, res, next) => {
     const { search, category, page = 1, limit = 10 } = req.query;
 
     const filter = {};
-    if (category) filter.category = category;
-    if (search)   filter.$text = { $search: search };
 
-    const skip  = (Number(page) - 1) * Number(limit);
+    // FIXED: Proper category filtering
+    if (category && category !== 'All') {
+      filter.category = category;
+    }
+
+    // Better search using regex
+    if (search && search.trim() !== '') {
+      const searchRegex = new RegExp(search, 'i');
+      filter.$or = [
+        { title: searchRegex },
+        { content: searchRegex },
+        { excerpt: searchRegex }
+      ];
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
     const total = await Post.countDocuments(filter);
 
     const posts = await Post.find(filter)
@@ -35,8 +49,15 @@ exports.getAllPosts = async (req, res, next) => {
       likeCount:    p.likes ? p.likes.length : 0,
     }));
 
-    res.json({ success: true, total, page: Number(page), limit: Number(limit), posts: result });
+    res.json({ 
+      success: true, 
+      total, 
+      page: Number(page), 
+      limit: Number(limit), 
+      posts: result 
+    });
   } catch (err) {
+    console.error(err);
     next(err);
   }
 };
