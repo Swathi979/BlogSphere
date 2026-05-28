@@ -19,17 +19,16 @@ export default function HomePage() {
     setError('');
     try {
       const params = { page, limit: LIMIT };
-      if (search)              params.search   = search;
+      if (search) params.search = search;
       if (category !== 'All') params.category = category;
 
-      // FIXED: Removed { data } destructuring
       const responseData = await api.get('/posts', { params });
       
       setPosts(responseData.posts || []);
       setTotal(responseData.total || 0);
     } catch (err) {
       console.error(err);
-      setError('Failed to load posts. Please try again.');
+      setError('Failed to load posts');
     } finally {
       setLoading(false);
     }
@@ -39,20 +38,24 @@ export default function HomePage() {
     fetchPosts(); 
   }, [fetchPosts]);
 
-  // Reset to page 1 on filter change
-  const handleSearch   = (e) => { setSearch(e.target.value); setPage(1); };
-  const handleCategory = (cat) => { setCategory(cat); setPage(1); };
+  const handleSearch = (e) => {
+    setSearch(e.target.value);
+    setPage(1);
+  };
+
+  const handleCategory = (cat) => {
+    setCategory(cat);
+    setPage(1);
+  };
 
   const totalPages = Math.ceil(total / LIMIT);
 
   return (
     <div className="home-page">
-      {/* Hero */}
       <section className="hero-section">
         <h1>Ideas worth <em>sharing</em></h1>
         <p>A platform for writers, thinkers, and creators.</p>
 
-        {/* Search bar */}
         <div className="search-bar">
           <span className="search-icon">🔍</span>
           <input
@@ -65,7 +68,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Category filter */}
       <div className="category-filter">
         {CATEGORIES.map((cat) => (
           <button
@@ -78,33 +80,30 @@ export default function HomePage() {
         ))}
       </div>
 
-      {/* Results summary */}
       <div className="results-meta">
         {!loading && <span>{total} post{total !== 1 ? 's' : ''}{search ? ` for "${search}"` : ''}</span>}
       </div>
 
-      {/* Posts grid */}
       {loading && <div className="loading-spinner">Loading posts…</div>}
-      {error   && <div className="error-box">{error}</div>}
+      {error && <div className="error-box">{error}</div>}
 
-      {!loading && !error && posts.length === 0 && (
+      {!loading && posts.length === 0 && (
         <div className="empty-state">
-          <div className="empty-icon">📭</div>
           <h3>No posts found</h3>
-          <p>Try a different search or category.</p>
         </div>
       )}
 
       <div className="posts-grid">
-        {posts.map((post) => <PostCard key={post._id} post={post} />)}
+        {posts.map((post) => (
+          <PostCard key={post._id} post={post} />
+        ))}
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="pagination">
-          <button disabled={page === 1}          onClick={() => setPage(p => p - 1)}>← Prev</button>
+          <button disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Prev</button>
           <span>Page {page} of {totalPages}</span>
-          <button disabled={page === totalPages}  onClick={() => setPage(p => p + 1)}>Next →</button>
+          <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Next →</button>
         </div>
       )}
     </div>
