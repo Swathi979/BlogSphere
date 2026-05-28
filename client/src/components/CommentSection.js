@@ -17,9 +17,11 @@ export default function CommentSection({ postId }) {
 
   const fetchComments = async () => {
     try {
-      const { data } = await api.get(`/comments/${postId}`);
-      setComments(data.comments);
-    } catch {
+      // FIXED: Removed destructuring
+      const responseData = await api.get(`/comments/${postId}`);
+      setComments(responseData.comments || []);
+    } catch (err) {
+      console.error(err);
       setError('Failed to load comments.');
     } finally {
       setLoading(false);
@@ -29,11 +31,14 @@ export default function CommentSection({ postId }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!text.trim()) return;
+    
     setSubmitting(true);
     setError('');
     try {
-      const { data } = await api.post(`/comments/${postId}`, { text });
-      setComments((prev) => [...prev, data.comment]);
+      // FIXED: Removed destructuring
+      const responseData = await api.post(`/comments/${postId}`, { text });
+      
+      setComments((prev) => [...prev, responseData.comment]);
       setText('');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to post comment.');
