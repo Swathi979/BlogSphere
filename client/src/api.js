@@ -1,28 +1,39 @@
-import axios from 'axios';
+const BASE = process.env.REACT_APP_API_URL || 'https://blogsphere-production-45c3.up.railway.app/api';
 
-const api = axios.create({
-  baseURL: '/api',
-  headers: { 'Content-Type': 'application/json' },
-});
-
-// Attach JWT token to every request automatically
-api.interceptors.request.use((config) => {
+async function request(method, path, body) {
   const token = localStorage.getItem('token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
 
-// Global response error handler
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  const data = await res.json();
+
+  if (res.status === 401) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+    return;
   }
-);
+
+  if (!res.ok) {
+    const err = new Error(data.message || 'Request failed');
+    err.data = data;
+    throw err;
+  }
+
+  return data;
+}
+
+const api = {
+  get:    (path)        => request('GET',    path),
+  post:   (path, body)  => request('POST',   path, body),
+  put:    (path, body)  => request('PUT',    path, body),
+  delete: (path)        => request('DELETE', path),
+};
 
 export default api;
