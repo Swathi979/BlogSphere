@@ -7,19 +7,27 @@ dotenv.config();
 
 const app = express();
 
-// ── Middleware ───────────────────────────────────────────────────────────────
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+// ── Middleware ────────────────────────────────────────────────────────────────
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://blog-sphere-three-black.vercel.app',
+    /\.vercel\.app$/,
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
-// ── Routes ───────────────────────────────────────────────────────────────────
+// ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/auth',     require('./routes/auth'));
 app.use('/api/posts',    require('./routes/posts'));
 app.use('/api/comments', require('./routes/comments'));
 
-// ── Health check ─────────────────────────────────────────────────────────────
+// ── Health check ──────────────────────────────────────────────────────────────
 app.get('/', (req, res) => res.json({ message: 'BlogSphere API is running 🚀' }));
 
-// ── Global error handler ─────────────────────────────────────────────────────
+// ── Global error handler ──────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({
@@ -28,7 +36,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ── Database + Start ─────────────────────────────────────────────────────────
+// ── Database + Start ──────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
 
 mongoose
@@ -41,3 +49,4 @@ mongoose
     console.error('❌ MongoDB connection failed:', err.message);
     process.exit(1);
   });
+  
