@@ -1,4 +1,4 @@
-const BASE = process.env.REACT_APP_API_URL || 'https://blogsphere-production-45c3.up.railway.app/api';
+const BASE = 'https://blogsphere-production-45c3.up.railway.app/api';
 
 async function request(method, path, body) {
   const token = localStorage.getItem('token');
