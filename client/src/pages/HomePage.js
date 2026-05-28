@@ -21,17 +21,23 @@ export default function HomePage() {
       const params = { page, limit: LIMIT };
       if (search)              params.search   = search;
       if (category !== 'All') params.category = category;
-      const { data } = await api.get('/posts', { params });
-      setPosts(data.posts);
-      setTotal(data.total);
-    } catch {
-      setError('');
+
+      // FIXED: Removed { data } destructuring
+      const responseData = await api.get('/posts', { params });
+      
+      setPosts(responseData.posts || []);
+      setTotal(responseData.total || 0);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to load posts. Please try again.');
     } finally {
       setLoading(false);
     }
   }, [search, category, page]);
 
-  useEffect(() => { fetchPosts(); }, [fetchPosts]);
+  useEffect(() => { 
+    fetchPosts(); 
+  }, [fetchPosts]);
 
   // Reset to page 1 on filter change
   const handleSearch   = (e) => { setSearch(e.target.value); setPage(1); };
