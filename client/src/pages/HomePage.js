@@ -25,7 +25,7 @@ export default function HomePage() {
       setPosts(data.posts);
       setTotal(data.total);
     } catch {
-      setError('Failed to load posts. Make sure the server is running.');
+      setError('');
     } finally {
       setLoading(false);
     }
