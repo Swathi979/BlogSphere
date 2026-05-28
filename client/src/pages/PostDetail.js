@@ -18,12 +18,12 @@ export default function PostDetail() {
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const { data } = await api.get(`/posts/${id}`);
+        const data = await api.get(`/posts/${id}`);
         setPost(data.post);
         setLikeCount(data.post.likes?.length || 0);
         if (user) setLiked(data.post.likes?.includes(user._id));
       } catch (err) {
-        setError(err.response?.status === 404 ? 'Post not found.' : 'Failed to load post.');
+        setError('Failed to load post.');
       } finally {
         setLoading(false);
       }
@@ -36,7 +36,7 @@ export default function PostDetail() {
     if (liking) return;
     setLiking(true);
     try {
-      const { data } = await api.post(`/posts/${id}/like`);
+      const data = await api.post(`/posts/${id}/like`);
       setLiked(data.liked);
       setLikeCount(data.likeCount);
     } catch {
@@ -68,10 +68,8 @@ export default function PostDetail() {
 
   return (
     <div className="post-detail-page">
-      {/* Back button */}
       <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
 
-      {/* Post header */}
       <article className="post-full">
         <div className="post-full-meta">
           <span className="category-badge">{post.category}</span>
@@ -80,7 +78,6 @@ export default function PostDetail() {
 
         <h1 className="post-full-title">{post.title}</h1>
 
-        {/* Author row */}
         <div className="post-author-row">
           <div className="author-avatar large">{initials}</div>
           <div>
@@ -95,21 +92,18 @@ export default function PostDetail() {
           )}
         </div>
 
-        {/* Content */}
         <div className="post-full-content">
           {post.content.split('\n').map((para, i) =>
             para.trim() ? <p key={i}>{para}</p> : <br key={i} />
           )}
         </div>
 
-        {/* Tags */}
         {post.tags?.length > 0 && (
           <div className="post-tags">
             {post.tags.map((tag) => <span key={tag} className="tag-pill">#{tag}</span>)}
           </div>
         )}
 
-        {/* Like button */}
         <div className="post-actions">
           <button
             className={`like-btn ${liked ? 'liked' : ''}`}
@@ -123,7 +117,6 @@ export default function PostDetail() {
         </div>
       </article>
 
-      {/* Comments */}
       <CommentSection postId={id} />
     </div>
   );
