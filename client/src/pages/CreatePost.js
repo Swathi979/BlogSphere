@@ -29,7 +29,7 @@ export default function CreatePost() {
         .map((t) => t.trim().toLowerCase())
         .filter(Boolean);
 
-      const { data } = await api.post('/posts', {
+      const data = await api.post('/posts', {
         title:    form.title.trim(),
         content:  form.content.trim(),
         category: form.category,
@@ -39,7 +39,7 @@ export default function CreatePost() {
 
       navigate(`/post/${data.post._id}`);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create post.');
+      setError(err.message || 'Failed to create post.');
     } finally {
       setLoading(false);
     }
