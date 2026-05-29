@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import PostCard from '../components/PostCard';
+import { useAuth } from '../context/AuthContext';
 import api from '../api';
 
-const CATEGORIES = ['All', 'Technology', 'Writing', 'Travel', 'Health', 'Business', 'Art', 'Science', 'General'];
+const CATS = ['All','Technology','Writing','Travel','Health','Business','Art','Science','General'];
 
 export default function HomePage() {
+  const { user } = useAuth();
   const [posts,    setPosts]    = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState('');
@@ -18,35 +21,21 @@ export default function HomePage() {
     setLoading(true);
     setError('');
     try {
-      const params = { page, limit: LIMIT };
-      if (search) params.search = search;
-      if (category !== 'All') params.category = category;
+      let url = `/posts?page=${page}&limit=${LIMIT}`;
+      if (search)             url += `&search=${encodeURIComponent(search)}`;
+      if (category !== 'All') url += `&category=${encodeURIComponent(category)}`;
 
-      const responseData = await api.get('/posts', { params });
-      
-      setPosts(responseData.posts || []);
-      setTotal(responseData.total || 0);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to load posts');
+      const data = await api.get(url);
+      setPosts(data.posts || []);
+      setTotal(data.total || 0);
+    } catch {
+      setError('Failed to load posts. Make sure the server is running.');
     } finally {
       setLoading(false);
     }
   }, [search, category, page]);
 
-  useEffect(() => { 
-    fetchPosts(); 
-  }, [fetchPosts]);
-
-  const handleSearch = (e) => {
-    setSearch(e.target.value);
-    setPage(1);
-  };
-
-  const handleCategory = (cat) => {
-    setCategory(cat);
-    setPage(1);
-  };
+  useEffect(() => { fetchPosts(); }, [fetchPosts]);
 
   const totalPages = Math.ceil(total / LIMIT);
 
@@ -55,28 +44,31 @@ export default function HomePage() {
       <section className="hero-section">
         <h1>Ideas worth <em>sharing</em></h1>
         <p>A platform for writers, thinkers, and creators.</p>
-
+        {!user && (
+          <div className="hero-btns">
+            <Link to="/register" className="btn btn-primary">Start Writing</Link>
+            <Link to="/login"    className="btn btn-outline">Sign In</Link>
+          </div>
+        )}
         <div className="search-bar">
-          <span className="search-icon">🔍</span>
+          <span>🔍</span>
           <input
             type="text"
-            placeholder="Search posts…"
+            placeholder="Search posts..."
             value={search}
-            onChange={handleSearch}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
           />
-          {search && <button className="search-clear" onClick={() => { setSearch(''); setPage(1); }}>✕</button>}
+          {search && <button onClick={() => { setSearch(''); setPage(1); }}>✕</button>}
         </div>
       </section>
 
       <div className="category-filter">
-        {CATEGORIES.map((cat) => (
+        {CATS.map(c => (
           <button
-            key={cat}
-            className={`category-btn ${category === cat ? 'active' : ''}`}
-            onClick={() => handleCategory(cat)}
-          >
-            {cat}
-          </button>
+            key={c}
+            className={`category-btn${category === c ? ' active' : ''}`}
+            onClick={() => { setCategory(c); setPage(1); }}
+          >{c}</button>
         ))}
       </div>
 
@@ -84,26 +76,27 @@ export default function HomePage() {
         {!loading && <span>{total} post{total !== 1 ? 's' : ''}{search ? ` for "${search}"` : ''}</span>}
       </div>
 
-      {loading && <div className="loading-spinner">Loading posts…</div>}
-      {error && <div className="error-box">{error}</div>}
+      {loading && <div className="loading-spinner">Loading posts...</div>}
+      {error   && <div className="error-box">{error}</div>}
 
-      {!loading && posts.length === 0 && (
+      {!loading && !error && posts.length === 0 && (
         <div className="empty-state">
+          <div className="empty-icon">📭</div>
           <h3>No posts found</h3>
+          <p>Try a different search or be the first to write!</p>
+          {user && <Link to="/create" className="btn btn-primary">Write First Post</Link>}
         </div>
       )}
 
       <div className="posts-grid">
-        {posts.map((post) => (
-          <PostCard key={post._id} post={post} />
-        ))}
+        {posts.map(post => <PostCard key={post._id} post={post} />)}
       </div>
 
       {totalPages > 1 && (
         <div className="pagination">
-          <button disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Prev</button>
+          <button disabled={page === 1}          onClick={() => setPage(p => p - 1)}>← Prev</button>
           <span>Page {page} of {totalPages}</span>
-          <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Next →</button>
+          <button disabled={page === totalPages}  onClick={() => setPage(p => p + 1)}>Next →</button>
         </div>
       )}
     </div>

@@ -16,9 +16,14 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchMyPosts = async () => {
       try {
-        const { data } = await api.get('/posts', { params: { limit: 50 } });
-        // Filter to only this user's posts (server doesn't have a /posts?author= endpoint yet — easy to add)
-        setPosts(data.posts.filter((p) => p.author?._id === user._id || p.author === user._id));
+        const data = await api.get(`/posts?limit=50`);
+        const allPosts = data.posts || [];
+        const myPosts = allPosts.filter(p =>
+          p.author?._id === user._id ||
+          p.author?._id === user.id  ||
+          p.author === user._id
+        );
+        setPosts(myPosts);
       } catch {
         setPosts([]);
       } finally {
@@ -26,13 +31,13 @@ export default function ProfilePage() {
       }
     };
     fetchMyPosts();
-  }, [user._id]);
+  }, [user._id, user.id]);
 
   const handleSaveBio = async () => {
     setSaving(true);
     setMsg('');
     try {
-      await updateProfile(bio, user.avatar);
+      await updateProfile(bio);
       setEditing(false);
       setMsg('Profile updated!');
     } catch {
@@ -42,23 +47,24 @@ export default function ProfilePage() {
     }
   };
 
-  const initials = user.username.slice(0, 2).toUpperCase();
+  const initials = user?.username ? user.username.slice(0, 2).toUpperCase() : '??';
 
   return (
     <div className="profile-page">
-      {/* Profile card */}
       <div className="profile-card">
         <div className="profile-avatar-large">{initials}</div>
         <div className="profile-info">
           <h1>{user.username}</h1>
           <p className="profile-email">{user.email}</p>
-          <p className="profile-joined">Member since {new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p>
+          <p className="profile-joined">
+            Member since {new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
+          </p>
 
           {editing ? (
             <div className="bio-edit">
               <textarea
                 value={bio}
-                onChange={(e) => setBio(e.target.value)}
+                onChange={e => setBio(e.target.value)}
                 placeholder="Tell us about yourself…"
                 maxLength={200}
                 rows={3}
@@ -84,7 +90,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="profile-stats">
         <div className="stat-card">
           <div className="stat-number">{posts.length}</div>
@@ -100,7 +105,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* My posts */}
       <div className="profile-posts">
         <div className="profile-posts-header">
           <h2>Your Posts</h2>
@@ -119,7 +123,7 @@ export default function ProfilePage() {
         )}
 
         <div className="posts-grid">
-          {posts.map((post) => <PostCard key={post._id} post={post} />)}
+          {posts.map(post => <PostCard key={post._id} post={post} />)}
         </div>
       </div>
     </div>
